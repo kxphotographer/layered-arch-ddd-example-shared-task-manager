@@ -1,0 +1,21 @@
+{
+	"extends": [
+		"@kxphotographer/layered-arch-ddd-example-shared-task-manager-config-base/tsconfig.json"
+	],
+	"compilerOptions": {
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"lib": ["esnext"],
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"outDir": "./dist",
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"rootDir": "./src",
+		"sourceMap": true,
+		"target": "esnext"
+	},
+	"include": ["./src/**/*.ts"]
+}
