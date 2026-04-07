@@ -1,5 +1,5 @@
-import * as v from "valibot";
 import type { Result } from "@kxphotographer/layered-arch-ddd-example-shared-task-manager-util";
+import * as v from "valibot";
 import type { TaskListSlug } from "./taskList";
 import type { UserSlug } from "./user";
 

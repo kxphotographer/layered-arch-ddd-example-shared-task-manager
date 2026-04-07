@@ -2,40 +2,31 @@ import {
 	type UserSlug,
 	vUserSlug,
 } from "@kxphotographer/layered-arch-ddd-example-shared-task-manager-domain";
-import type { Context } from "hono";
-import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
 import { sign, verify } from "hono/jwt";
 import * as v from "valibot";
 import type { Port } from "@/port";
+import type {
+	InferRFC9457ResponseBodyPerStatus,
+	RFC9457ResponseErrorDefinition,
+} from "./rfc9457";
 
-const COOKIE_ACCESS_TOKEN_NAME = "access_token";
 const COOKIE_ACCESS_TOKEN_ALGORITHM = "HS256";
 
-export const setAuthCookieForUser = async (
-	c: Context,
+export const issueAccessTokenForUser = async (
 	params: Readonly<{
 		jwtSecret: string;
 		userSlug: UserSlug;
 	}>,
-) => {
-	setCookie(
-		c,
-		COOKIE_ACCESS_TOKEN_NAME,
-		await sign(
-			{
-				sub: params.userSlug,
-				exp: Math.floor(Date.now() / 1000) + 86400, // 1 day
-			},
-			params.jwtSecret,
-			COOKIE_ACCESS_TOKEN_ALGORITHM,
-		),
+) =>
+	await sign(
+		{
+			sub: params.userSlug,
+			exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+		} satisfies v.InferInput<typeof jwtPayloadSchema>,
+		params.jwtSecret,
+		COOKIE_ACCESS_TOKEN_ALGORITHM,
 	);
-};
-
-export const deleteAuthCookie = (c: Context) => {
-	deleteCookie(c, COOKIE_ACCESS_TOKEN_NAME);
-};
 
 export const requireAuth = (injected: Port<"jwtSecret">) =>
 	createMiddleware<{
@@ -43,9 +34,30 @@ export const requireAuth = (injected: Port<"jwtSecret">) =>
 			currentUserSlug: UserSlug;
 		};
 	}>(async (c, next) => {
-		const token = getCookie(c, COOKIE_ACCESS_TOKEN_NAME);
-		if (!token) {
-			return c.redirect(`/login?redirect_to=${encodeURIComponent(c.req.url)}`);
+		const authHeader = c.req.header("Authorization");
+		if (!authHeader) {
+			return c.json(
+				{
+					title: "unauthorized",
+					detail: "Unauthorized",
+				} satisfies InferRFC9457ResponseBodyPerStatus<
+					(typeof requireAuthRFC9457ResponseDefinitions)[number]
+				>[401],
+				401,
+			);
+		}
+
+		const [scheme, token] = authHeader.split(" ");
+		if (scheme !== "Bearer" || !token) {
+			return c.json(
+				{
+					title: "unauthorized",
+					detail: "Unauthorized",
+				} satisfies InferRFC9457ResponseBodyPerStatus<
+					(typeof requireAuthRFC9457ResponseDefinitions)[number]
+				>[401],
+				401,
+			);
 		}
 
 		const jwtPayload = await verify(
@@ -55,7 +67,15 @@ export const requireAuth = (injected: Port<"jwtSecret">) =>
 		);
 		const parseResult = v.safeParse(jwtPayloadSchema, jwtPayload);
 		if (!parseResult.success) {
-			return c.redirect(`/login?redirect_to=${encodeURIComponent(c.req.url)}`);
+			return c.json(
+				{
+					title: "unauthorized",
+					detail: "Unauthorized",
+				} satisfies InferRFC9457ResponseBodyPerStatus<
+					(typeof requireAuthRFC9457ResponseDefinitions)[number]
+				>[401],
+				401,
+			);
 		}
 
 		c.set("currentUserSlug", parseResult.output.sub);
@@ -67,3 +87,11 @@ const jwtPayloadSchema = v.object({
 	exp: v.pipe(v.number(), v.integer()),
 	sub: vUserSlug,
 });
+
+export const requireAuthRFC9457ResponseDefinitions = [
+	{
+		status: 401,
+		title: "unauthorized",
+		description: "Unauthorized",
+	},
+] as const satisfies readonly RFC9457ResponseErrorDefinition[];

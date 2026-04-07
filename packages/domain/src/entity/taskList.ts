@@ -2,7 +2,7 @@ import type { Result } from "@kxphotographer/layered-arch-ddd-example-shared-tas
 import * as v from "valibot";
 import type { User, UserSlug } from "./user";
 
-const vTaskListSlug = v.pipe(
+export const vTaskListSlug = v.pipe(
 	v.string(),
 	v.minLength(1),
 	v.brand("TaskListSlug"),

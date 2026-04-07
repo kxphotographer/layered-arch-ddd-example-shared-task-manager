@@ -1,9 +1,17 @@
 import type { AuthenticateUserWithEmailAndPassword } from "./authenticateUserWithEmailAndPassword";
-import type { FetchTaskListForUser } from "./fetchTaskListForUser";
+import type { FetchManyTaskListsForUser } from "./fetchManyTaskListsForUser";
+import type { FetchTaskListBySlug } from "./fetchTaskListBySlug";
+
+export type {
+	AuthenticateUserWithEmailAndPassword,
+	FetchManyTaskListsForUser,
+	FetchTaskListBySlug,
+};
 
 type _Port = Readonly<{
 	authenticateUserWithEmailAndPassword: AuthenticateUserWithEmailAndPassword;
-	fetchTaskListForUser: FetchTaskListForUser;
+	fetchManyTaskListsForUser: FetchManyTaskListsForUser;
+	fetchTaskListBySlug: FetchTaskListBySlug;
 	getCurrentDate: () => Date;
 	jwtSecret: string;
 }>;

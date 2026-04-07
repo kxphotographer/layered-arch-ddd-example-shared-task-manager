@@ -1,16 +1,14 @@
 import { Hono } from "hono";
-import { loginApp } from "./login";
-import { logoutApp } from "./logout";
-import { taskListListApp } from "./task-list/list";
+import { authSessionApp as authSessionsApp } from "./auth-session";
+import { taskListsApp } from "./task-lists";
+import type { taskListsListApp } from "./task-lists/list";
 
 export const rootApp = (
-	injected: Parameters<typeof loginApp>[0] &
-		Parameters<typeof logoutApp>[0] &
-		Parameters<typeof taskListListApp>[0],
+	injected: Parameters<typeof authSessionsApp>[0] &
+		Parameters<typeof taskListsListApp>[0],
 ) =>
 	new Hono()
-		.route("/login", loginApp(injected))
-		.route("/logout", logoutApp(injected))
-		.route("/task-list", taskListListApp(injected));
+		.route("/auth-sessions", authSessionsApp(injected))
+		.route("/task-lists", taskListsApp(injected));
 
 export type RootAppType = typeof rootApp;
